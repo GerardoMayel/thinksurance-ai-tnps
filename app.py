@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Obtener la clave API de Gemini de la variable de entorno.
 # En Databricks, configura una variable de entorno llamada GEMINI_API_KEY
 # y vincúlala a tu secreto de Databricks que contiene la clave.
-GEMINI_API_KEY = os.getenv("secret")
+GEMINI_API_KEY = os.getenv("token-gemini")
 
 if GEMINI_API_KEY:
     print("GEMINI_API_KEY encontrada en las variables de entorno.")
