@@ -1,0 +1,15 @@
+# Flask framework
+Flask>=2.0
+
+# For loading environment variables from .env file
+python-dotenv>=0.19
+
+# Google Generative AI SDK (for Gemini)
+google-generativeai>=0.3
+
+# For making HTTP requests (useful for Databricks endpoint)
+requests>=2.25
+
+# (Opcional, pero recomendado para desarrollo)
+# Werkzeug debugger and reloader, usually comes with Flask but good to specify
+Werkzeug>=2.0
