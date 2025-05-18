@@ -1,4 +1,4 @@
 command: ["flask", "--app", "app.py", "run"]
 env:
-  - name: "secret"
-    valueFrom: "token-gemini"
+  - name: "TOKEN_GEMINI"
+    valueFrom: "secret"
