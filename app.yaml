@@ -2,3 +2,7 @@ command: ["flask", "--app", "app.py", "run"]
 env:
   - name: "TOKEN_GEMINI"
     valueFrom: "secret"
+  - name: "DATABRICKS_ENDPOINT_URL"
+    valueFrom: "serving_endpoint"
+  - name: "DATABRICKS_TOKEN"
+    valueFrom: "secret-2"
