@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot con Gemini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Configuración de Tailwind para usar la fuente Inter globalmente
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+
+    <div class="chat-container w-full max-w-2xl bg-gray-800 shadow-2xl rounded-xl flex flex-col">
+        <header class="bg-gradient-to-r from-sky-600 to-cyan-500 p-4 rounded-t-xl">
+            <h1 class="text-xl md:text-2xl font-bold text-center text-white">Asistente Virtual Gemini</h1>
+        </header>
+
+        <div id="chat-box" class="chat-box flex-1 p-6 space-y-4 overflow-y-auto">
+            <div class="message bot-message flex">
+                <div class="avatar bg-sky-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">B</div>
+                <p class="bg-sky-600 text-white p-3 rounded-lg inline-block max-w-xs md:max-w-md shadow">
+                    Hola 👋 ¿En qué puedo ayudarte hoy?
+                </p>
+            </div>
+        </div>
+
+        <footer class="chat-input-area bg-gray-700 p-4 rounded-b-xl border-t border-gray-600">
+            <form id="message-form" class="flex items-center space-x-3">
+                <input type="text" id="message-input" class="flex-1 p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none placeholder-gray-400 transition-shadow duration-150 shadow-sm hover:shadow-md" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+                <button type="submit" id="send-button" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-gray-700 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                        <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.949a.75.75 0 00.95.599l8.204-2.344a.75.75 0 000-1.338L3.23 1.69a.75.75 0 00-.125-.039zm11.959 7.043l-8.204 2.344a.75.75 0 00-.95-.599l-1.414-4.949a.75.75 0 00.826-.95l10.048-3.015a.75.75 0 00.599.951l-1.048 3.668z" />
+                    </svg>
+                </button>
+            </form>
+            <p id="status-indicator" class="text-xs text-gray-400 mt-2 text-center h-4"></p> </footer>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+```
+
+A continuación, el archivo `static/style.css`. Puedes dejarlo casi vacío si Tailwind CSS es suficiente, o añadir estilos específicos.
+
+
+```css
+/* static/style.css */
+
+/* Estilos para la barra de desplazamiento en el chat-box (WebKit browsers) */
+.chat-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-box::-webkit-scrollbar-track {
+    background: #1f2937; /* bg-gray-800 más oscuro o similar */
+    border-radius: 10px;
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background-color: #4b5563; /* bg-gray-600 */
+    border-radius: 10px;
+    border: 2px solid #1f2937; /* Para crear un pequeño espacio alrededor del pulgar */
+}
+
+.chat-box::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280; /* bg-gray-500 */
+}
+
+/* Ajuste de altura del contenedor del chat para que ocupe más pantalla en escritorio */
+.chat-container {
+    height: calc(100vh - 4rem); /* 100% de la altura de la ventana menos un poco de padding/margen */
+    max-height: 800px; /* Un máximo razonable */
+}
+
+/* En pantallas más pequeñas, permitir que ocupe toda la altura */
+@media (max-width: 768px) {
+    .chat-container {
+        height: calc(100vh - 2rem); /* Menos padding en móviles */
+        max-height: none;
+        border-radius: 0; /* Sin bordes redondeados en pantalla completa móvil */
+    }
+    body {
+        padding: 0; /* Eliminar padding del body en móviles para que el chat ocupe todo */
+    }
+    .chat-container header, .chat-container footer {
+        border-radius: 0; /* Quitar bordes redondeados de header/footer en móviles */
+    }
+}
+
+/* Animación sutil para mensajes entrantes */
+.message {
+    animation: fadeInScaleUp 0.4s ease-out forwards;
+    opacity: 0; /* Inicia invisible para la animación */
+}
+
+@keyframes fadeInScaleUp {
+    0% {
+        opacity: 0;
+        transform: translateY(15px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Estilos para los mensajes del usuario y del bot */
+.user-message .avatar {
+    background-color: #3b82f6; /* Azul para el usuario, ejemplo */
+}
+.bot-message .avatar {
+    background-color: #06b6d4; /* Cyan para el bot, ejemplo */
+}
+
+.message p {
+    word-break: break-word; /* Para que el texto largo no rompa el layout */
+}
+```
+
+Y finalmente, el archivo `static/script.js` que maneja la lógica del frontend:
+
+
+```javascript
+// static/script.js
+document.addEventListener('DOMContentLoaded', () => {
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const chatBox = document.getElementById('chat-box');
+    const sendButton = document.getElementById('send-button');
+    const statusIndicator = document.getElementById('status-indicator');
+
+    // Función para añadir mensajes al chatbox
+    function addMessageToChatbox(message, sender, avatarInitial = 'U') {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message', 'flex', 'items-end');
+        
+        if (sender === 'user') {
+            messageWrapper.classList.add('justify-end');
+        }
+
+        const messageContent = document.createElement('div');
+        messageContent.classList.add('flex', 'items-end', 'max-w-md', 'md:max-w-lg');
+
+
+        const avatarElement = document.createElement('div');
+        avatarElement.classList.add('avatar', 'rounded-full', 'w-8', 'h-8', 'flex', 'items-center', 'justify-center', 'text-white', 'font-semibold', 'flex-shrink-0', 'shadow-md');
+        avatarElement.textContent = avatarInitial;
+
+        const paragraph = document.createElement('p');
+        paragraph.classList.add('p-3', 'rounded-lg', 'shadow-md', 'mx-2');
+        
+        // Sanitizar el texto para evitar XSS simple. Para producción, usar una librería más robusta.
+        paragraph.textContent = message; 
+
+        if (sender === 'user') {
+            avatarElement.classList.add('bg-blue-500', 'order-2'); // Avatar a la derecha
+            paragraph.classList.add('bg-blue-600', 'text-white', 'order-1');
+        } else { // Bot
+            avatarElement.classList.add('bg-sky-500', 'order-1'); // Avatar a la izquierda
+            paragraph.classList.add('bg-sky-600', 'text-white', 'order-2');
+        }
+        
+        messageContent.appendChild(avatarElement);
+        messageContent.appendChild(paragraph);
+
+        // Si es mensaje de usuario, el avatar va después del texto
+        if (sender === 'user') {
+            messageContent.removeChild(avatarElement); // Quitar el avatar de su posición actual
+            messageContent.appendChild(avatarElement); // Añadirlo al final
+        }
+
+
+        messageWrapper.appendChild(messageContent);
+        chatBox.appendChild(messageWrapper);
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll hacia el último mensaje
+    }
+
+    messageForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); 
+        const userMessage = messageInput.value.trim();
+
+        if (userMessage) {
+            addMessageToChatbox(userMessage, 'user', 'TÚ'); // 'TÚ' como inicial para el usuario
+            messageInput.value = ''; 
+            sendButton.disabled = true; 
+            statusIndicator.textContent = 'Bot está escribiendo...';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: userMessage }),
+                });
+
+                if (!response.ok) {
+                    // Intenta parsear el error del JSON si es posible
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        // Si no es JSON, usa el texto del status
+                        errorData = { error: response.statusText };
+                    }
+                    throw new Error(errorData.error || `Error del servidor: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.error) { // Si el backend devuelve un JSON con clave 'error'
+                    addMessageToChatbox(data.error, 'bot', 'E');
+                } else {
+                    addMessageToChatbox(data.reply, 'bot', 'B');
+                }
+
+            } catch (error) {
+                console.error('Error al contactar al bot:', error);
+                addMessageToChatbox(`Error: ${error.message || 'No se pudo obtener respuesta.'}`, 'bot', 'E');
+            } finally {
+                sendButton.disabled = false; 
+                statusIndicator.textContent = ''; 
+                messageInput.focus(); 
+            }
+        }
+    });
+
+    // Habilitar/deshabilitar el botón de enviar basado en si hay texto en el input
+    messageInput.addEventListener('input', () => {
+        sendButton.disabled = messageInput.value.trim() === '';
+    });
+    // Inicialmente deshabilitado si el input está vacío
+    sendButton.disabled = messageInput.value.trim() === '';
+});
+```
+
+**Instrucciones:**
+
+1.  **Crea las carpetas `templates` y `static`** en la raíz de tu proyecto (al mismo nivel que `app.py`), si no existen.
+2.  **Guarda `index.html`** dentro de la carpeta `templates`.
+3.  **Guarda `style.css` y `script.js`** dentro de la carpeta `static`.
+
+Con estos tres archivos en su lugar y el `app.py` del Canvas (ID: `flask_app_py_initial`), la aplicación debería poder renderizar la interfaz del chat y permitirte interactuar con el backend.
+
+Por favor, verifica que estos archivos estén correctamente ubicados y con el contenido completo. Luego, prueba tu aplicación nuevamente. Si sigues viendo una página vacía, revisa la consola del navegador (F12) en busca de errores de carga de archivos (pestaña Red) o errores de JavaScript (pestaña Consol
