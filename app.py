@@ -11,23 +11,21 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# --- Configuración del Endpoint de Databricks Llama ---
-DATABRICKS_ENDPOINT_URL = os.getenv("DATABRICKS_ENDPOINT_URL")
+# --- Configuración del Endpoint de Databricks Llama (Definida en Código) ---
+DATABRICKS_ENDPOINT_URL = "https://adb-3330313079281414.14.azuredatabricks.net/serving-endpoints/databricks-llama-4-maverick/invocations"
+# LLAMA_MODEL_NAME ya no es necesario si el endpoint es específico.
+
+# El token de Databricks SÍ se obtiene de las variables de entorno,
+# ya que es un secreto gestionado por la plataforma Databricks.
 DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")
-# El nombre del modelo que espera tu endpoint específico.
-# Puede ser parte de la URL del endpoint o requerido en el payload.
-# Basado en tu URL, el endpoint es para "databricks-llama-4-maverick".
-LLAMA_MODEL_NAME = os.getenv("LLAMA_MODEL_NAME", "databricks-llama-4-maverick")
 
 
 # Verificar configuración al iniciar
-if not DATABRICKS_ENDPOINT_URL:
-    print("Advertencia: La variable de entorno DATABRICKS_ENDPOINT_URL no está configurada.")
 if not DATABRICKS_TOKEN:
-    print("Advertencia: La variable de entorno DATABRICKS_TOKEN no está configurada.")
-if DATABRICKS_ENDPOINT_URL and DATABRICKS_TOKEN:
-    print(f"Configuración para Databricks Llama endpoint '{DATABRICKS_ENDPOINT_URL}' lista.")
-    print(f"Usando el modelo en payload: {LLAMA_MODEL_NAME}")
+    print("Advertencia: La variable de entorno DATABRICKS_TOKEN no está configurada. La comunicación con el endpoint fallará.")
+else:
+    print(f"Configuración para Databricks Llama endpoint: '{DATABRICKS_ENDPOINT_URL}' (definida en código).")
+    print(f"Token de Databricks: Cargado desde variable de entorno.")
 
 
 @app.route('/')
@@ -46,9 +44,9 @@ def chat_endpoint():
     """
     print("\n--- Nueva Solicitud a /chat (Databricks Llama) ---")
 
-    if not DATABRICKS_ENDPOINT_URL or not DATABRICKS_TOKEN:
-        print("Error en /chat: DATABRICKS_ENDPOINT_URL o DATABRICKS_TOKEN no configurados en el servidor.")
-        return jsonify({"error": "El servicio de IA no está configurado correctamente en el servidor."}), 500
+    if not DATABRICKS_TOKEN: # DATABRICKS_ENDPOINT_URL está hardcodeado
+        print("Error en /chat: DATABRICKS_TOKEN no configurado en el servidor.")
+        return jsonify({"error": "El servicio de IA no está configurado correctamente en el servidor (falta token)."}), 500
 
     try:
         data = request.get_json()
@@ -79,25 +77,17 @@ def chat_endpoint():
         }
 
         # Payload para el endpoint de Databricks (formato OpenAI compatible)
+        # El campo "model" se omite ya que el endpoint es específico para un modelo.
         payload = {
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message } # El mensaje del usuario es su calificación/respuesta
             ],
-            # "model": LLAMA_MODEL_NAME, # El campo 'model' puede o no ser necesario dependiendo de cómo esté configurado tu endpoint.
-                                      # Si el endpoint es específico para un modelo, este campo podría ser ignorado o causar un error si no coincide.
-                                      # Lo incluyo basado en tu ejemplo, pero prueba quitarlo si da problemas.
             "temperature": 0.7,
             "max_tokens": 150, # Ajustar según la longitud esperada de la respuesta del bot
             # "stop": ["</end>"] # Opcional, si tu modelo usa secuencias de parada específicas
         }
         
-        # Si tu endpoint es específico para "databricks-llama-4-maverick",
-        # es posible que no necesites el campo "model" en el payload.
-        # Si lo requiere, asegúrate que LLAMA_MODEL_NAME sea el correcto.
-        # Por ahora, lo dejamos fuera para probar si el endpoint lo infiere.
-        # Si da error, podemos añadirlo: payload["model"] = LLAMA_MODEL_NAME
-
         print(f"Enviando payload al endpoint de Databricks: {json.dumps(payload, indent=2)}")
         
         response = requests.post(DATABRICKS_ENDPOINT_URL, headers=headers, json=payload)
@@ -116,7 +106,28 @@ def chat_endpoint():
         else:
             # Fallback o manejo de estructura de respuesta inesperada
             print("Advertencia: Estructura de respuesta inesperada del modelo Llama.")
-            bot_reply = "Gracias. ¿Hay algo más en lo que pueda ayudarte?" # Respuesta genérica
+            # Intentar obtener el texto de otra forma si la estructura es diferente
+            if 'text' in response_data: # Algunos endpoints podrían devolver 'text' directamente
+                 bot_reply = response_data['text']
+            elif 'generated_text' in response_data: # Otro formato común
+                 bot_reply = response_data['generated_text']
+            # Si la respuesta es una lista de predicciones (formato más antiguo de Databricks Model Serving)
+            elif 'predictions' in response_data and isinstance(response_data['predictions'], list) and len(response_data['predictions']) > 0:
+                # Asumimos que la primera predicción es la relevante y que es una cadena o un dict con 'content'
+                first_prediction = response_data['predictions'][0]
+                if isinstance(first_prediction, str):
+                    bot_reply = first_prediction
+                elif isinstance(first_prediction, dict) and 'content' in first_prediction: # Si es un dict con 'content'
+                    bot_reply = first_prediction['content']
+                elif isinstance(first_prediction, dict) and 'text' in first_prediction: # O con 'text'
+                    bot_reply = first_prediction['text']
+                else:
+                    bot_reply = "Gracias por tu respuesta. ¿Podrías detallar un poco más?"
+                    print(f"Contenido de response_data['predictions'][0] para depuración: {first_prediction}")
+            else:
+                 bot_reply = "Gracias por tu respuesta. ¿Podrías detallar un poco más?"
+                 print(f"Contenido de response_data para depuración: {response_data}")
+
 
         print(f"Respuesta generada por el bot (Llama): '{bot_reply}'")
         return jsonify({"reply": bot_reply})
@@ -136,4 +147,3 @@ if __name__ == '__main__':
     
     print(f"Iniciando servidor Flask en host 0.0.0.0 puerto {port}, debug={is_debug_mode}")
     app.run(host='0.0.0.0', port=port, debug=is_debug_mode)
-    # En producción, es recomendable no usar debug=True por razones de seguridad.
