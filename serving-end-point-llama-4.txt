@@ -1,0 +1,85 @@
+
+https://adb-3330313079281414.14.azuredatabricks.net/serving-endpoints/databricks-llama-4-maverick/invocations
+
+
+import os
+os.environ["DATABRICKS_TOKEN"] = dbutils.secrets.get(scope="kv-dbx-mex-prod-001", key="token-gerardo-databricks")
+# Configuración básica (endpoint y token)
+URL_ENDPOINT = "https://adb-3330313079281414.14.azuredatabricks.net/serving-endpoints/lama_3_3/invocations"
+DATABRICKS_TOKEN = dbutils.secrets.get(scope="kv-dbx-mex-prod-001", key="token-gerardo-databricks")
+
+
+import os
+import requests
+import json
+
+# Configuración básica (endpoint y token)
+URL_ENDPOINT = "https://adb-3330313079281414.14.azuredatabricks.net/serving-endpoints/lama_3_3/invocations"
+DATABRICKS_TOKEN = dbutils.secrets.get(scope="kv-dbx-mex-prod-001", key="token-gerardo-databricks")
+
+import re
+import requests
+
+def analyze_customer_feedback(customer_transcription):
+    """
+    Analiza la transcripción del cliente para extraer insights clave.
+    
+    Args:
+        customer_transcription (str): Transcripción del cliente.
+        
+    Returns:
+        dict: Diccionario con los insights analizados.
+    """
+    headers = {
+        'Authorization': f'Bearer {DATABRICKS_TOKEN}',
+        'Content-Type': 'application/json'
+    }
+
+    system_prompt = (
+        "Eres un experto en analizar califiaciones obtenidas en comentarios de NPS la siguiente es el fragmento de una conversación entre un cliente y un agente y ahora solo te muestro lo mencionado por el cliente y lo analizarás:\n"
+        "1. Identifica la primera calificación numérica mencionada por el cliente.\n"
+        "2. Extrae comentarios finales sobre la experiencia.\n"
+        "3. Enumera criterios positivos, neutros mencionados. nota: si NO hay deja el espacio vacío\n"
+        "4. Enumera criterios negativos mencionados. nota: si NO hay deja el espacio vacío\n"
+        "5. Proporciona un resumen estándarizado de la causa raíz del feedback.\n\n"
+        "6. Se creara en un paso poterior una nube de pagabra entonces pon aquí las top 3 palabras en minúsculas más relevantes mencionadas con el cliente que sean relevantes y representativas para tomadores de decisiones de mejora cambio o mantenimiento del proceso con el que el cliente tuvo interacción y siempre que mantengan relación con el contexto y sentir del cliente y su calificacion TNPS_1 del servicio recibido\n\n"
+        "Formato de respuesta:\n"
+        "TNPS_1: [primera_calificación_numérica_en_la_conversación]\n"
+        "OBSERVACIONES_FINALES: [comentarios finales]\n"
+        "CRITERIOS_POSITIVOS: [aspectos positivos]\n"
+        "CRITERIOS_NEGATIVOS: [aspectos negativos]\n"
+        "CAUSA_RAIZ: [resumen estándarizado]"
+        "PALABRAS_NUBE: [palabra1, palabra2, palabra3]"
+    )
+
+    payload = {
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Transcripción del cliente: {customer_transcription}"}
+        ],
+        "model": "llama_3_70b",
+        "temperature": 0.7,
+        "max_tokens": 550,
+        "stop": ["</end>"]
+    }
+
+    try:
+        response = requests.post(URL_ENDPOINT, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()['choices'][0]['message']['content']
+        
+        # Procesar la respuesta del modelo con manejo seguro
+        analysis = {}
+        lines = result.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line or ':' not in line:
+                continue  # Saltar líneas vacías o sin clave-valor
+            key, value = line.split(':', 1)  # Dividir solo en el primer ":"
+            analysis[key.strip()] = value.strip()
+        
+        return analysis
+    
+    except Exception as e:
+        print(f"Error al analizar la transcripción: {str(e)}")
+        return {}
