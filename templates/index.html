@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot para saber si nos recomendarás ZUIRCH-SANTANDER</title>
+    <title>Chatbot TNPS ZURICH-SANTANDER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
-        // Configuración de Tailwind para usar la fuente Inter globalmente
         tailwind.config = {
             theme: {
                 extend: {
@@ -24,30 +23,24 @@
 
     <div class="chat-container w-full max-w-2xl bg-gray-800 shadow-2xl rounded-xl flex flex-col">
         <header class="bg-gradient-to-r from-sky-600 to-cyan-500 p-4 rounded-t-xl">
-            <h1 class="text-xl md:text-2xl font-bold text-center text-white">Asistente Virtual IA TNPS ZUIRCH-SANTANDER</h1>
+            <h1 class="text-xl md:text-2xl font-bold text-center text-white">Asistente Virtual IA TNPS ZURICH-SANTANDER</h1>
         </header>
 
         <div id="chat-box" class="chat-box flex-1 p-6 space-y-4 overflow-y-auto">
-            <div class="message bot-message flex">
-                <div class="avatar bg-sky-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">B</div>
-                <p class="bg-sky-600 text-white p-3 rounded-lg inline-block max-w-xs md:max-w-md shadow">
-                    Hola 👋 ¿En una escala del 1 al 10 nos recomendarías?
-                </p>
             </div>
-        </div>
 
         <footer class="chat-input-area bg-gray-700 p-4 rounded-b-xl border-t border-gray-600">
             <form id="message-form" class="flex items-center space-x-3">
-                <input type="text" id="message-input" class="flex-1 p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none placeholder-gray-400 transition-shadow duration-150 shadow-sm hover:shadow-md" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+                <input type="text" id="message-input" class="flex-1 p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none placeholder-gray-400 transition-shadow duration-150 shadow-sm hover:shadow-md" placeholder="Escribe tu respuesta aquí..." autocomplete="off">
                 <button type="submit" id="send-button" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-gray-700 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                         <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.949a.75.75 0 00.95.599l8.204-2.344a.75.75 0 000-1.338L3.23 1.69a.75.75 0 00-.125-.039zm11.959 7.043l-8.204 2.344a.75.75 0 00-.95-.599l-1.414-4.949a.75.75 0 00.826-.95l10.048-3.015a.75.75 0 00.599.951l-1.048 3.668z" />
                     </svg>
                 </button>
             </form>
-            <p id="status-indicator" class="text-xs text-gray-400 mt-2 text-center h-4"></p> </footer>
+            <p id="status-indicator" class="text-xs text-gray-400 mt-2 text-center h-4"></p>
+        </footer>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-```
