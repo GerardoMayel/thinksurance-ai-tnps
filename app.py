@@ -143,5 +143,5 @@ if __name__ == '__main__':
     # pero para depuración local, True (o basado en FLASK_ENV) es útil.
     # Flask CLI podría pasar su propio flag de debug.
     # Si FLASK_ENV=development, Flask habilita el modo debug por defecto.
-    app.run(host='0.0.0.0', port=port, debug=is_debug_mode)
+    app.run(host='0.0.0.0', port=port, debug=is_debug_mode)sa
 
